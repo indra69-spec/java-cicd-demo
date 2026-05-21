@@ -21,7 +21,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                url: 'https://github.com/YOUR_USERNAME/java-ci-cd-demo.git'
+                url: 'https://github.com/indra69-spec/java-ci-cd-demo.git'
             }
         }
 
@@ -61,11 +61,9 @@ pipeline {
     }
 
     post {
-
         success {
             echo 'CI/CD Pipeline completed successfully!'
         }
-
         failure {
             echo 'Pipeline failed!'
         }

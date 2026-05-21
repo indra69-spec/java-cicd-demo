@@ -1,71 +1,31 @@
 pipeline {
-
     agent any
-
     tools {
-        maven 'Maven'
-        jdk 'JDK17'
+        maven 'Maven-3.9.6' // Matches the name in Global Tool Configuration
     }
-
     triggers {
-        cron('H/5 * * * *')
+        cron('H/15 * * * *') // Triggers the pipeline every 15 minutes
     }
-
-    environment {
-        IMAGE_NAME = "java-ci-cd-demo"
-        CONTAINER_NAME = "java-ci-cd-container"
-    }
-
     stages {
-
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                url: 'https://github.com/indra69-spec/java-ci-cd-demo.git'
+                git 'https://github.com'
             }
         }
-
-        stage('Build Maven Project') {
+        stage('Build & Test') {
             steps {
-                sh 'mvn clean package'
+                sh 'mvn clean package' // Compiles and runs JUnit tests
             }
         }
-
-        stage('Run Unit Tests') {
+        stage('Docker Build & Push') {
             steps {
-                sh 'mvn test'
+                script {
+                    docker.withRegistry('', 'docker-hub-creds') {
+                        def appImage = docker.build("your-dockerhub-id/java-app:${env.BUILD_NUMBER}")
+                        appImage.push()
+                    }
+                }
             }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh 'docker build -t $IMAGE_NAME .'
-            }
-        }
-
-        stage('Stop Old Container') {
-            steps {
-                sh 'docker rm -f $CONTAINER_NAME || true'
-            }
-        }
-
-        stage('Deploy Container') {
-            steps {
-                sh '''
-                docker run -d \
-                --name $CONTAINER_NAME \
-                $IMAGE_NAME
-                '''
-            }
-        }
-    }
-
-    post {
-        success {
-            echo 'CI/CD Pipeline completed successfully!'
-        }
-        failure {
-            echo 'Pipeline failed!'
         }
     }
 }
